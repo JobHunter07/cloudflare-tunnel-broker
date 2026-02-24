@@ -1,3 +1,8 @@
+interface CfApiResponse {
+  success: boolean;
+  result: any;
+}
+
 export async function createTunnel(env: any, tunnelName: string) {
   const url = `${env.CF_API_BASE}/accounts/${env.CF_ACCOUNT_ID}/cfd_tunnel`;
 
@@ -11,7 +16,7 @@ export async function createTunnel(env: any, tunnelName: string) {
     body: JSON.stringify({ name: tunnelName })
   });
 
-  const json = await res.json();
+  const json = await res.json() as CfApiResponse;
   if (!json.success) throw new Error("Failed to create tunnel");
 
   return json.result;
@@ -36,7 +41,7 @@ export async function createDnsRecord(env: any, hostname: string, target: string
     })
   });
 
-  const json = await res.json();
+  const json = await res.json() as CfApiResponse;
   if (!json.success) throw new Error("Failed to create DNS record");
 
   return json.result;
