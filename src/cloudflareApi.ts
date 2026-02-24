@@ -8,13 +8,12 @@ async function callCloudflare(
     method,
     headers: {
       "Content-Type": "application/json",
-      "CF-Access-Client-Id": env.CF_API_CLIENT_ID,
-      "CF-Access-Client-Secret": env.CF_API_CLIENT_SECRET
+      "Authorization": `Bearer ${env.CF_API_TOKEN}`
     },
     body: body ? JSON.stringify(body) : undefined
   });
 
-  const json = await res.json().catch(() => ({})) as any;
+  const json = (await res.json().catch(() => ({}))) as any;
 
   if (!res.ok || !json.success) {
     console.log("Cloudflare API error:", {

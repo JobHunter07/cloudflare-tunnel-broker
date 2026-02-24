@@ -24,7 +24,11 @@ export default {
           return new Response("Missing nodeId", { status: 400 });
         }
 
-        const result = await createTunnelForNode(body.nodeId, body.displayName ?? "", env);
+        const result = await createTunnelForNode(
+          body.nodeId,
+          body.displayName ?? "",
+          env
+        );
 
         return new Response(JSON.stringify(result), {
           status: 200,
@@ -35,7 +39,9 @@ export default {
       return new Response("Not found", { status: 404 });
     } catch (err: any) {
       console.log("Worker error:", err?.message ?? err);
-      return new Response("Error: " + (err?.message ?? "unknown"), { status: 500 });
+      return new Response("Error: " + (err?.message ?? "unknown"), {
+        status: 500
+      });
     }
   }
 };
