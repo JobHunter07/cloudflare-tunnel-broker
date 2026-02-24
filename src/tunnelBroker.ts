@@ -1,15 +1,22 @@
 import { createTunnel, createDnsRecord } from "./cloudflareApi";
 
+interface TunnelRecord {
+  tunnelToken: string;
+  publicUrl: string;
+  nodeId: string;
+  displayName: string;
+}
+
 export async function createTunnelForNode(
   nodeId: string,
   displayName: string,
   env: any
-) {
+): Promise<TunnelRecord> {
   const kvKey = `tunnel:${nodeId}`;
   const existing = await env.TUNNELS_KV.get(kvKey, "json");
 
   if (existing) {
-    return existing;
+    return existing as TunnelRecord;
   }
 
   const tunnelName = `node-${nodeId}`;
@@ -23,7 +30,7 @@ export async function createTunnelForNode(
 
   const publicUrl = `https://${hostname}`;
 
-  const result = {
+  const result: TunnelRecord = {
     tunnelToken,
     publicUrl,
     nodeId,

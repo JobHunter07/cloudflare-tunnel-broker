@@ -1,84 +1,86 @@
-# Tunnel Broker (Cloudflare Worker)
+# Cloudflare Tunnel Broker (jobhunter07.com)
 
-This Worker automatically provisions Cloudflare Tunnels for decentralized CRM nodes.
+This Worker provisions Cloudflare Tunnels for decentralized CRM nodes.
 
-Each CRM instance calls `/register` with its NodeId.  
+Each node calls `POST /register` with a `nodeId`.  
 The Worker:
 
 1. Creates a Cloudflare Tunnel
-2. Creates a DNS record (node-{nodeId}.yourdomain.com)
-3. Returns a tunnelToken + publicUrl
-4. CRM starts cloudflared locally using the token
+2. Creates a DNS CNAME: `node-{nodeId}.jobhunter07.com`
+3. Stores the mapping in KV
+4. Returns `{ tunnelToken, publicUrl, nodeId, displayName }`
+
+Your CRM then starts `cloudflared` locally with the `tunnelToken`.
 
 ---
 
-## Cloudflare Setup Instructions
+## Cloudflare Setup (UI)
 
-### 1. Create a Cloudflare Account
-Go to https://dash.cloudflare.com and create an account.
+1. Add domain `jobhunter07.com` to Cloudflare.
 
-### 2. Add a Domain
-Add a domain (example: `myhivecrm.com`).
+2. Get:
+   - **Account ID**: Dashboard → Overview → right side.
+   - **Zone ID**: Dashboard → jobhunter07.com → Overview → right side.
 
-### 3. Enable Cloudflare Zero Trust
-Go to Zero Trust → Access → Service Tokens.
+3. Create KV namespace:
+   - Workers & Pages → KV → Create namespace
+   - Name: `TUNNELS_KV`
+   - Copy the ID and put it into `wrangler.toml`.
 
-### 4. Create a Service Token
-Create a new Service Token with:
-- Name: `TunnelBroker`
-- Permissions:
-  - Cloudflare Tunnels: Edit
-  - DNS: Edit
+4. Create a Service Token:
+   - Zero Trust → Access → Service Tokens
+   - Name: `TunnelBroker`
+   - Permissions:
+     - Cloudflare Tunnel: Edit
+     - DNS: Edit
+   - Copy:
+     - Client ID
+     - Client Secret
 
-Copy:
-- Client ID
-- Client Secret
+5. Protect the Worker with Access:
+   - Zero Trust → Access → Applications → Add an application
+   - Type: Self-hosted
+   - Domain: `cloudflare-tunnel-broker.kbdavis0007.workers.dev` (or your Worker route)
+   - Policy: Service Token → select `TunnelBroker`
 
-### 5. Create a KV Namespace
-Workers → KV → Create Namespace  
-Name: `TUNNELS_KV`
+6. Configure Worker variables:
+   - Workers & Pages → your Worker → Settings → Variables
+   - Add:
+     - `CF_ACCOUNT_ID`
+     - `CF_ZONE_ID`
+     - `CF_API_BASE` = `https://api.cloudflare.com/client/v4`
+     - `DOMAIN` = `jobhunter07.com`
+   - KV binding:
+     - `TUNNELS_KV` → your KV namespace
+   - Secrets:
+     - `CF_API_CLIENT_ID`
+     - `CF_API_CLIENT_SECRET`
 
-Copy the KV ID.
-
-### 6. Create a Worker
-Workers → Create Worker  
-Replace code with the files in this repo.
-
-### 7. Configure wrangler.toml
-Set:
-- CF_ACCOUNT_ID
-- CF_ZONE_ID
-- DOMAIN
-- KV namespace ID
-
-### 8. Add Secrets
-Run:
-wrangler secret put CF_API_CLIENT_ID wrangler secret put CF_API_CLIENT_SECRET
-
-
-Paste the values from your Service Token.
-
-### 9. Deploy
-
-wrangler deploy
-
-
-Your Worker is now live.
+7. Deploy via dashboard or `wrangler deploy`.
 
 ---
 
-## CRM Integration
+## Testing with Postman
 
-On first run:
+POST:
 
-1. CRM generates NodeId
-2. CRM POSTs to `/register`
-3. Worker returns:
-   - tunnelToken
-   - publicUrl
-4. CRM starts cloudflared:
+- URL: `https://cloudflare-tunnel-broker.kbdavis0007.workers.dev/register`
+- Headers:
+  - `Content-Type: application/json`
+  - `CF-Access-Client-Id: <service_token_client_id>`
+  - `CF-Access-Client-Secret: <service_token_client_secret>`
+- Body:
+  ```json
+  {
+    "nodeId": "test-node-001",
+    "displayName": "Brian Test Node"
+  }
 
-cloudflared tunnel run --token <tunnelToken>
-5. CRM is now reachable at:
-`https://node-{nodeId}.yourdomain.com`
+Expected response:
 
+{
+  "tunnelToken": "...",
+  "publicUrl": "https://node-test-node-001.jobhunter07.com",
+  "nodeId": "test-node-001",
+  "displayName": "Brian Test Node"
+}

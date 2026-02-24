@@ -12,6 +12,7 @@ kv_namespaces = [
 CF_ACCOUNT_ID = "52c4c835467474709bad46d262b26e6a"
 CF_ZONE_ID = "7467f81a67a932dfc7c03bf97cf7dafd"
 CF_API_BASE = "https://api.cloudflare.com/client/v4"
+DOMAIN = "jobhunter07.com"
 
 # Secure secrets (set via wrangler secret put)
 # CF_API_CLIENT_ID
