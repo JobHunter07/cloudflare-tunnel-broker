@@ -1,0 +1,18 @@
+name = "tunnel-broker"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+# Bindings
+kv_namespaces = [
+  { binding = "TUNNELS_KV", id = "your_kv_id_here" }
+]
+
+# Environment variables (Service Token)
+[vars]
+CF_ACCOUNT_ID = "your_account_id_here"
+CF_ZONE_ID = "your_zone_id_here"
+CF_API_BASE = "https://api.cloudflare.com/client/v4"
+
+# Secure secrets (set via wrangler secret put)
+# CF_API_CLIENT_ID
+# CF_API_CLIENT_SECRET
